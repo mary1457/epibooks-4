@@ -1,85 +1,46 @@
-import { Component } from 'react'
+
+import { useState, useEffect } from 'react'
 import CommentList from './CommentList'
 import AddComment from './AddComment'
-import Loading from './Loading'
-import Error from './Error'
 
-class CommentArea extends Component {
-  state = {
-    comments: [],
-    isLoading: false,
-    isError: false,
-  }
+const CommentArea = ({ newSelectedValue }) => {
+  const [comments, setComments] = useState([])
 
-  // componentDidMount = async () => {
-  //   try {
-  //     let response = await fetch(
-  //       'https://striveschool-api.herokuapp.com/api/comments/' +
-  //         this.props.asin,
-  //       {
-  //         headers: {
-  //           Authorization:
-  //             'Bearer inserisci-qui-il-tuo-token',
-  //         },
-  //       }
-  //     )
-  //     console.log(response)
-  //     if (response.ok) {
-  //       let comments = await response.json()
-  //       this.setState({ comments: comments, isLoading: false, isError: false })
-  //     } else {
-  //       console.log('error')
-  //       this.setState({ isLoading: false, isError: true })
-  //     }
-  //   } catch (error) {
-  //     console.log(error)
-  //     this.setState({ isLoading: false, isError: true })
-  //   }
-  // }
+  useEffect(() => {
+    fetchReservations()
+  }, [newSelectedValue])
 
-  componentDidUpdate = async (prevProps) => {
-    if (prevProps.asin !== this.props.asin) {
-      this.setState({
-        isLoading: true,
-      })
-      try {
-        let response = await fetch(
-          'https://striveschool-api.herokuapp.com/api/comments/' +
-            this.props.asin,
-          {
-            headers: {
-              Authorization: 'Bearer inserisci-qui-il-tuo-token',
-            },
-          }
-        )
+  const fetchReservations = () => {
+    const URL = 'https://striveschool-api.herokuapp.com/api/comments/' + newSelectedValue
+    fetch(URL, {
+      headers: {
+        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NmEzNTUzNGYyNjBjYzAwMTVjYzBkZDIiLCJpYXQiOjE3MjQ2OTQ4NjksImV4cCI6MTcyNTkwNDQ2OX0.nhff3SO7n3TIYxpWEOpNQoOEmIEfhCJugAXNwDnHzEw',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
         console.log(response)
         if (response.ok) {
-          let comments = await response.json()
-          this.setState({
-            comments: comments,
-            isLoading: false,
-            isError: false,
-          })
+          return response.json()
         } else {
-          this.setState({ isLoading: false, isError: true })
+          throw new Error('Errore nella chiamata, response non OK')
         }
-      } catch (error) {
-        console.log(error)
-        this.setState({ isLoading: false, isError: true })
-      }
-    }
+      })
+      .then((arrayOfComments) => {
+        console.log('COMMENTI DAL DB', arrayOfComments)
+        setComments(arrayOfComments)
+      })
+      .catch((error) => {
+        console.log('ERRORE!', error)
+      })
   }
 
-  render() {
-    return (
-      <div className="text-center">
-        {this.state.isLoading && <Loading />}
-        {this.state.isError && <Error />}
-        <AddComment asin={this.props.asin} />
-        <CommentList commentsToShow={this.state.comments} />
-      </div>
-    )
-  }
+  return (
+    <>
+      <CommentList comments={comments} />
+      <AddComment asin={newSelectedValue} />
+    </>
+  )
 }
 
 export default CommentArea
